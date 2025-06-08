@@ -1,0 +1,10 @@
+app:
+  title: Document Ingestion System
+  version: 1.0.0
+database:
+  url: sqlite:///documents.db
+message_bus:
+  rabbitmq_host: localhost
+  rabbitmq_port: 5672
+  rabbitmq_user: guest
+  rabbitmq_password: guest
