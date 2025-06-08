@@ -20,8 +20,9 @@ def classifier_worker():
             event = DocTextEvent.parse_raw(body)
             
             # Classify document
-            res = classify_document(event.text, event.entities)
-            res = json.loads(res)
+            res = classify_document(event.text, str(event.entities))
+            res = json.loads(res.strip().removeprefix("```json").removesuffix("```").strip())
+
             print(res)
             doc_type = res["category"]
             confidence = int(res["confidence_score"])

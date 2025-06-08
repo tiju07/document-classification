@@ -10,7 +10,7 @@ class DocReceivedEvent(BaseModel):
 class DocTextEvent(BaseModel):
     doc_id: str
     text: str
-    entities: Dict[str, str]
+    entities: Dict
 
 class DocTypeEvent(BaseModel):
     doc_id: str

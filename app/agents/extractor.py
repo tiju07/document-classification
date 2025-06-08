@@ -24,10 +24,9 @@ def extractor_worker():
 
             cleaned_text = process_file(file_path)
             
-            # Extract entities
-            entities = None
-            
+            # Extract entities            
             entities = extract_entities(event.metadata.get("email_body", "") + "\n" + cleaned_text)
+            entities = entities.strip().removeprefix("```json").removesuffix("```").strip()
             entities = json.loads(entities)
 
             # Update document status in database

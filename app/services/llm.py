@@ -22,11 +22,30 @@ def encode_image_to_base64(image: Image.Image) -> str:
     return f"data:image/png;base64,{img_str}"
 
 def extract_entities(text: str) -> str:
-    return '{\"key\": \"LLM Response\"}'
+    # return '{\"key\": \"LLM Response\"}'
     response = llm.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert in extracting entities from email content. Extract all dates, parties, amounts and other entities you find in the email body given as a json object. Keep in mind that the data you extract will be heavily relied on to classify the attachments in the email into categories, so make sure to extract all the important information."},
+            {"role": "system", 
+             "content": """You are an expert in extracting structured entities from email content.
+                            Given the body of an email, extract the following entities:
+                            Dates: All relevant dates mentioned.
+                            Parties: Names of individuals, companies, or organizations.
+                            Amounts: All monetary values with currency symbols.
+                            Other Entities: Any additional relevant information (like Invoice No, VAT No, IBAN, BIC, etc.)
+                            Instructions:
+                            Return the output strictly as a valid JSON object (no Markdown code blocks, no explanations, no comments).
+                            Do not include any text before or after the JSON.
+                            Use double quotes (") for all JSON keys and string values.
+                            Use this structure:
+                            {
+                                "Dates": [],
+                                "Parties": [],
+                                "Amounts": [],
+                                "Other Entities": {
+                                    // keys and values dynamically extracted from the email
+                                }
+                            }"""},
             {"role": "user", "content": text}
         ],
         max_tokens=500
@@ -34,13 +53,27 @@ def extract_entities(text: str) -> str:
     return response.choices[0].message.content.strip()
 
 def classify_document(text: str, entities: str = None) -> str:
-    return '{\"category\": \"contract\", \"confidence_score\":80}'
+    # return '{\"category\": \"contract\", \"confidence_score\":80}'
     messages = [
-        {"role": "system", "content": "You are an expert in categorizing documents. Determine the category of the given text based on the text and entities extracted from it. Provide a confidence score in percentage along with the category. If no entities are given, just categorize the text based on its content. Return the result as a valid JSON object with 'category' and 'confidence_score'. DO NOT return anything other than the json object. For e.g. {'category': 'contract', 'confidence_score':80}"},
-        {"role": "user", "content": text}
+        {"role": "system", 
+        "content": """You are an expert in extracting structured entities from email content.
+            Given the body of an email, extract the following entities:
+            category: The category of the given content (e.g., contract, invoice, letter).
+            confidence_score: The confidence score of the classification (0-100).
+            Instructions:
+            Return the output strictly as a valid JSON object (no Markdown code blocks, no explanations, no comments).
+            Do not include any text before or after the JSON.
+            Use double quotes (") for all JSON keys and string values.
+            Use this structure:
+            {
+                "category": "",
+                "confidence_score": ""
+            }
+        """},
+        {"role": "user", "content": "Text: " + text + "\nEntities: " + entities}
     ]
-    if entities:
-        messages.append({"role": "user", "content": entities})
+    # if entities:
+    #     messages.append({"role": "user", "content": entities})
     response = llm.chat.completions.create(
         model="gpt-4o",
         messages=messages,
@@ -52,7 +85,7 @@ def summarize_email_body(text: str) -> str:
     return text
 
 def summarize_image_with_vision(image: Image.Image) -> str:
-    return "LLM Response"
+    # return "LLM Response"
     encoded_image = encode_image_to_base64(image)
     response = llm.chat.completions.create(
         model="gpt-4o",
