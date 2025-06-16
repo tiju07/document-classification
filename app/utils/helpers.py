@@ -4,6 +4,8 @@ from typing import Tuple
 from fastapi import UploadFile
 from app.api.v1.schemas import Attachment
 from app.utils.logging import setup_logging
+from datetime import datetime
+from decimal import Decimal
 
 logger = setup_logging()
 
@@ -41,3 +43,17 @@ def save_email_attachment(attachment: Attachment) -> Tuple[str, str, int]:
     except Exception as e:
         logger.error(f"Failed to save email attachment {attachment.filename}: {e}")
         raise
+
+def sqlalchemy_obj_to_dict(obj):
+    result = {}
+    for column in obj.__table__.columns:
+        value = getattr(obj, column.name)
+
+        if isinstance(value, datetime):
+            result[column.name] = value.isoformat()
+        elif isinstance(value, Decimal):
+            result[column.name] = float(value)
+        else:
+            result[column.name] = value
+
+    return result

@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -28,3 +29,13 @@ class EmailWebhookPayload(BaseModel):
     from_email: str
     subject: Optional[str]
     attachments: List[Attachment]
+
+class DocumentResponse(BaseModel):
+    id: str
+    name: str
+    status: str
+    type: Optional[str]
+    confidence: Optional[float]
+    destination: Optional[str]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]

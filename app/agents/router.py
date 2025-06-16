@@ -1,8 +1,11 @@
+import asyncio
 import pika
 import json
 from threading import Thread
+from app.agents.broadcast import notify_document_update
 from app.message_bus.bus import MessageBus
 from app.message_bus.events import DocTypeEvent, DocRoutedEvent
+from app.utils.helpers import sqlalchemy_obj_to_dict
 from app.utils.logging import setup_logging
 from app.services.router import route_document
 from app.database.db import get_db
@@ -30,6 +33,8 @@ def router_worker():
                 document.destination = destination
                 db.commit()
                 db.refresh(document)
+                
+                asyncio.run(notify_document_update(sqlalchemy_obj_to_dict(document)))
             
             # Publish doc.routed event
             routed_event = DocRoutedEvent(

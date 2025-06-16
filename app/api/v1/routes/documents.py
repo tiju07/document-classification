@@ -6,7 +6,7 @@ from app.models.document import Document
 from app.message_bus.bus import MessageBus
 from app.message_bus.events import DocTypeEvent, DocRoutedEvent
 from app.utils.logging import setup_logging
-from app.api.v1.schemas import DocumentStatusResponse, DocumentOverrideRequest
+from app.api.v1.schemas import DocumentResponse, DocumentStatusResponse, DocumentOverrideRequest
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 logger = setup_logging()
@@ -31,7 +31,7 @@ async def get_document_status(doc_id: str, db: Session = Depends(get_db)):
         logger.error(f"Failed to retrieve status for document {doc_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve document status")
     
-@router.get("", response_model=List[DocumentStatusResponse])
+@router.get("", response_model=List[DocumentResponse])
 async def get_all_documents(db: Session = Depends(get_db)):
     try:
         documents = db.query(Document).all()
@@ -39,17 +39,21 @@ async def get_all_documents(db: Session = Depends(get_db)):
             return []
         
         logger.info("Retrieved all documents from database")
-        return [
-            DocumentStatusResponse(
-                doc_id=doc.id,
-                filename=doc.name,
+        response = [
+            DocumentResponse(
+                id=doc.id,
+                name=doc.name,
                 status=doc.status,
                 type=doc.type,
                 confidence=doc.confidence,
-                destination=doc.destination
+                destination=doc.destination,
+                created_at=doc.created_at,
+                updated_at=doc.updated_at
             )
             for doc_id, doc in enumerate(documents)
         ]
+        response.sort(key=lambda doc: doc.updated_at, reverse=True)
+        return response
     except Exception as e:
         logger.error(f"Failed to retrieve all documents: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve documents")

@@ -1,8 +1,11 @@
+import asyncio
 import pika
 import json
 from threading import Thread
+from app.agents.broadcast import notify_document_update
 from app.message_bus.bus import MessageBus
 from app.message_bus.events import DocReceivedEvent, DocTextEvent
+from app.utils.helpers import sqlalchemy_obj_to_dict
 from app.utils.logging import setup_logging
 from app.services.ocr import extract_text
 # from app.services.nlp import clean_text, extract_entities
@@ -24,7 +27,7 @@ def extractor_worker():
 
             cleaned_text = process_file(file_path)
             
-            # Extract entities            
+            # Extract entities
             entities = extract_entities(event.metadata.get("email_body", "") + "\n" + cleaned_text)
             entities = entities.strip().removeprefix("```json").removesuffix("```").strip()
             entities = json.loads(entities)
@@ -36,6 +39,8 @@ def extractor_worker():
                 document.status = "extracted"
                 db.commit()
                 db.refresh(document)
+                doc = sqlalchemy_obj_to_dict(document)
+                asyncio.run(notify_document_update(doc))
             
             # Publish doc.text event
             text_event = DocTextEvent(

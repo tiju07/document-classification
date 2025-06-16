@@ -1,14 +1,16 @@
+import asyncio
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import uuid4
 import os
 
+from app.agents.broadcast import notify_document_update
 from app.database.db import get_db
 from app.models.document import Document
 from app.message_bus.bus import MessageBus
 from app.message_bus.events import DocReceivedEvent
 from app.utils.logging import setup_logging
-from app.utils.helpers import save_email_attachment, save_uploaded_file
+from app.utils.helpers import save_email_attachment, save_uploaded_file, sqlalchemy_obj_to_dict
 from app.api.v1.schemas import UploadResponse, EmailWebhookPayload
 
 
@@ -73,6 +75,7 @@ async def process_email_webhook(payload: EmailWebhookPayload, db: Session = Depe
             db.add(document)
             db.commit()
             db.refresh(document)
+            asyncio.run(notify_document_update(sqlalchemy_obj_to_dict(document)))
             
             # Prepare and publish event
             event = DocReceivedEvent(
